@@ -39,8 +39,13 @@ export default function Hub() {
   return (
     <main className="min-h-screen bg-[#fafafa] text-neutral-900 font-sans">
       <div className="mx-auto max-w-6xl px-5 py-12 md:py-20">
-        <p className="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">Nexora AI · Phase 1 · Design approval gate</p>
+        <p className="text-xs font-semibold tracking-[0.2em] text-neutral-500 uppercase">Nexora AI · Direction B selected · Phase 2 foundation</p>
         <h1 className="mt-3 text-4xl md:text-5xl font-semibold tracking-tight">Three interactive design directions</h1>
+        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
+          <span><strong>Growth Intelligence (B)</strong> is the approved direction and now runs as the real product with sign-in, organisations and client workspaces.</span>
+          <Link href="/signup" className="rounded-lg bg-blue-700 px-3 py-1.5 font-medium text-white hover:bg-blue-800">Create an account</Link>
+          <Link href="/login" className="rounded-lg border border-blue-300 px-3 py-1.5 font-medium hover:bg-blue-100">Sign in</Link>
+        </div>
         <p className="mt-4 max-w-2xl text-neutral-600 leading-relaxed">
           Each concept is a working front end with its own information architecture, navigation model, visual identity and interaction patterns. All
           figures are <strong>synthetic demonstration data</strong> for a fictional agency client; no live integrations are connected.

@@ -48,14 +48,16 @@ export default function GrowthLanding() {
             <a href="#product" className="text-mist hover:text-white">Product</a>
             <a href="#measurement" className="text-mist hover:text-white">Measurement</a>
             <a href="#agencies" className="text-mist hover:text-white">Agencies</a>
-            <Link href={`${GROWTH_BASE}/overview`} className="rounded-lg bg-electric px-4 py-2 font-medium text-white hover:bg-electric/85">Open the terminal</Link>
+            <Link href="/login" className="text-mist hover:text-white">Sign in</Link>
+            <Link href="/signup" className="rounded-lg bg-electric px-4 py-2 font-medium text-white hover:bg-electric/85">Start free</Link>
           </nav>
           <button onClick={() => setMenu(!menu)} className="grid h-9 w-9 place-items-center rounded-lg border border-slate-line md:hidden" aria-label={menu ? "Close menu" : "Open menu"} aria-expanded={menu}>{menu ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}</button>
         </div>
         {menu && (
           <nav aria-label="Mobile" className="space-y-1 border-t border-slate-line/60 px-5 py-3 md:hidden">
             {["Product", "Measurement", "Agencies"].map((x) => <a key={x} href={`#${x.toLowerCase()}`} onClick={() => setMenu(false)} className="block py-2 text-mist">{x}</a>)}
-            <Link href={`${GROWTH_BASE}/overview`} className="block rounded-lg bg-electric px-4 py-2 text-center font-medium text-white">Open the terminal</Link>
+            <Link href="/signup" className="block rounded-lg bg-electric px-4 py-2 text-center font-medium text-white">Start free</Link>
+            <Link href="/login" className="block py-2 text-center text-mist">Sign in</Link>
           </nav>
         )}
       </header>
@@ -70,8 +72,8 @@ export default function GrowthLanding() {
             </motion.h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-mist">Measured revenue, transparent attribution and evidence-backed recommendations across every client — computed by tested formulas, explained with sources.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href={`${GROWTH_BASE}/overview`} className="inline-flex items-center gap-2 rounded-lg bg-electric px-6 py-3 font-medium text-white hover:bg-electric/85">Open the terminal <ArrowRight className="h-4 w-4" aria-hidden /></Link>
-              <a href="#measurement" className="rounded-lg border border-slate-line px-6 py-3 text-white hover:bg-navy-2">How we measure</a>
+              <Link href="/signup" className="inline-flex items-center gap-2 rounded-lg bg-electric px-6 py-3 font-medium text-white hover:bg-electric/85">Create your agency <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+              <Link href={`${GROWTH_BASE}/overview`} className="rounded-lg border border-slate-line px-6 py-3 text-white hover:bg-navy-2">Explore the demo</Link>
             </div>
 
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="mx-auto mt-14 max-w-5xl rounded-2xl border border-slate-line bg-navy/80 p-3 text-left shadow-[0_40px_120px_-20px_rgba(61,123,255,0.45)]">

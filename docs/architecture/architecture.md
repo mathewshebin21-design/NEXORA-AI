@@ -1,26 +1,50 @@
 # NEXORA AI — Architecture Recommendation
 
-*Phase 0/1 recommendation. Only the front-end preview exists today. Everything below the "Preview" section is the proposed design for Phase 2 onward.*
+*Updated for Phase 2. The core SaaS foundation is implemented. Modules marked as planned in the target diagram arrive in later phases.*
 
-## What exists now (Phase 1 preview)
+## What exists now (Phase 2 — core SaaS foundation)
 
 ```
-apps/web/                 Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Motion · Recharts
-  app/                    Routes: / (concept hub), /atelier, /growth, /command (+ 11 in-app screens each)
-  components/{atelier,growth,command}/   Concept-specific shells, primitives and screens
-  lib/metrics.ts          Deterministic metric formulas (null on zero denominators)
-  lib/attribution.ts      5 rule-based models + reconciliation check
-  lib/stats.ts            Two-proportion z-test, Wald CI, sample size
-  lib/scenario.ts         Saturating response curves, marginal ROAS, uncertainty band
-  lib/copilot.ts          Deterministic intent router used in place of an LLM in the preview
-  lib/demo-data.ts        SYNTHETIC fixtures (fictional agency + clients)
-  tests/analytics.test.ts Unit tests with hand-computed expected values
-  tests/e2e.mjs           Playwright route crawl + axe-core + interaction checks
+apps/api/                 FastAPI · SQLAlchemy 2 · PostgreSQL 16 · Alembic · Argon2id
+  nexora/db.py            engine, sessions, per-transaction tenant context (RLS settings)
+  nexora/models.py        users, sessions, organizations, workspaces, memberships, invitations,
+                          projects, api_keys, audit_logs, usage_events
+  nexora/permissions.py   org + workspace roles → permissions
+  nexora/deps.py          session auth, org/workspace context, API-key auth
+  nexora/routers/         auth · orgs (members, invitations) · workspaces (members, projects) ·
+                          governance (API keys, audit, usage, export) · public (/v1, API keys)
+  nexora/purge.py         hard-delete orgs after the deletion grace period
+  migrations/             0001: schema, RLS policies, grants, append-only audit trigger
+  tests/                  auth, tenant isolation, RBAC, governance (PostgreSQL, real RLS)
+apps/web/                 Next.js 16 · React 19 · Tailwind 4 — design direction B
+  app/login, /signup, /invite/[token]       authentication
+  app/app/[orgId]/w/[wsId]/[screen]         workspace screens (analytics, projects, settings)
+  app/app/[orgId]/org/[tab]                 members & invites, usage, audit, organization, security
+  components/app/          product shell (org/workspace switchers), forms, audit table, screens
+  components/growth/       design-B primitives + analytics screens (shown with synthetic data in the demo workspace)
+  lib/api/                 typed API client (same-origin /api proxy, CSRF header)
+  tests/product-e2e.mjs    browser flow against the real API
+  (the A/B/C concept previews remain at /atelier, /growth, /command)
 ```
 
-The analytics modules are written to be ported directly into the back end (Python) or kept as a shared TypeScript package for client-side what-if tools.
+### Tenancy model
 
-## Target architecture (Phase 2+): modular monolith
+```
+Organization (agency)          ← org roles: owner · admin · member
+  ├── Workspace (client)       ← workspace roles: workspace_admin · strategist · media_buyer · lifecycle · analyst · client_viewer
+  │     ├── Projects
+  │     ├── API keys (scoped to this workspace)
+  │     └── Audit entries (workspace_id set)
+  ├── Invitations (optionally pre-assign a workspace + role)
+  ├── Audit log (append-only)
+  └── Usage events (plan metering)
+```
+
+Request flow: session cookie → user → `SET LOCAL app.user_id/app.org_id` → RLS-scoped queries → membership and role checks → permission check. Each signup creates the organisation plus a **demo workspace** flagged `is_demo`. Only demo workspaces show synthetic analytics. Real workspaces show an explicit "no data connected" state until Phase 3 connectors exist.
+
+See [`docs/security/security-overview.md`](../security/security-overview.md) for controls and known gaps.
+
+## Target architecture: modular monolith
 
 ```
             ┌───────────────────────────── Next.js (Vercel or container) ─────────────────────────────┐

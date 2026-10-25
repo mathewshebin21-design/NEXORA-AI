@@ -4,11 +4,10 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { AlertTriangle, ArrowRight, Info, Sparkles } from "lucide-react";
 import { Area, Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Badge, Gate, GRID, Kpi, Panel, axisProps, growthTooltip, useFilters } from "../ui";
+import { Badge, Gate, GRID, Kpi, Panel, axisProps, growthTooltip, useBase, useFilters } from "../ui";
 import { channelTotals, daily, forecast, funnel, recommendations } from "@/lib/demo-data";
 import { roas, safeDiv } from "@/lib/metrics";
 import { fmtCompactCurrency, fmtCurrency, fmtPct, fmtRatio } from "@/lib/format";
-import { GROWTH_BASE } from "@/lib/screens";
 
 function windowSums(days: typeof daily) {
   return days.reduce((a, d) => ({ revenue: a.revenue + d.revenue, spend: a.spend + d.spend, orders: a.orders + d.orders, sessions: a.sessions + d.sessions }), { revenue: 0, spend: 0, orders: 0, sessions: 0 });
@@ -17,6 +16,7 @@ const change = (cur: number | null, prev: number | null) => (cur === null || pre
 
 export default function Overview() {
   const { range, channels, compare } = useFilters();
+  const base = useBase();
   const cur = windowSums(daily.slice(-range));
   const prev = daily.length >= range * 2 ? windowSums(daily.slice(-range * 2, -range)) : null;
   const d = (f: (x: ReturnType<typeof windowSums>) => number | null) => (compare && prev ? change(f(cur), f(prev)) : null);
@@ -65,7 +65,7 @@ export default function Overview() {
           </Gate>
         </Panel>
 
-        <Panel title="Channel mix" subtitle="Measured revenue & ROAS · filtered by channel selector" actions={<Link href={`${GROWTH_BASE}/attribution`} className="text-[11px] text-electric-soft hover:underline">Attribution →</Link>}>
+        <Panel title="Channel mix" subtitle="Measured revenue & ROAS · filtered by channel selector" actions={<Link href={`${base}/attribution`} className="text-[11px] text-electric-soft hover:underline">Attribution →</Link>}>
           <Gate rows={6}>
             <ul className="space-y-3">
               {chans.map((c) => (
@@ -117,7 +117,7 @@ export default function Overview() {
             <ul className="space-y-2.5">
               {recommendations.slice(0, 3).map((r) => (
                 <li key={r.id}>
-                  <Link href={`${GROWTH_BASE}/insights`} className="group block rounded-lg border border-slate-line/60 p-2.5 hover:border-electric/60">
+                  <Link href={`${base}/insights`} className="group block rounded-lg border border-slate-line/60 p-2.5 hover:border-electric/60">
                     <div className="flex items-center gap-1.5"><Badge tone="blue">{r.kind}</Badge><Badge tone={r.confidence === "High" ? "teal" : r.confidence === "Medium" ? "amber" : "coral"}>{r.confidence}</Badge></div>
                     <p className="mt-1.5 text-[12.5px] text-white">{r.title}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-[11px] text-mist">{r.evidence.length} cited records <ArrowRight className="h-3 w-3 transition group-hover:translate-x-0.5" aria-hidden /></p>

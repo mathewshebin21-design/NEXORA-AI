@@ -7,6 +7,11 @@ import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/format";
 import { usePreviewState } from "@/lib/preview-state";
 import { CHANNELS, daily, type Channel } from "@/lib/demo-data";
+import { GROWTH_BASE } from "@/lib/screens";
+
+/** Base path for in-app links, so the same screens work in the preview and in the product shell. */
+export const BaseCtx = createContext<string>(GROWTH_BASE);
+export const useBase = () => useContext(BaseCtx);
 
 /* ---------------------------------------------------------- Global filters */
 export type Range = 30 | 60 | 90;

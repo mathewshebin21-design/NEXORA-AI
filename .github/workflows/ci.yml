@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API · lint + tests (PostgreSQL)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen
+      - run: uv run ruff check nexora tests migrations
+      - run: uv run ruff format --check nexora tests migrations
+      - run: uv run pytest -q
+        env:
+          NEXORA_TEST_SUPERUSER_URL: postgresql://postgres@localhost:5433
+      - name: Dependency audit
+        run: uvx pip-audit --strict --progress-spinner off -r <(uv export --frozen --no-dev --no-hashes)
+
+  web:
+    name: Web · typecheck, unit, build, e2e
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - uses: astral-sh/setup-uv@v6
+      - run: npm ci
+        working-directory: apps/web
+      - run: npm run typecheck
+        working-directory: apps/web
+      - run: npm run test:unit
+        working-directory: apps/web
+      - run: npm audit --omit=dev --audit-level=high
+        working-directory: apps/web
+      - run: npm run build
+        working-directory: apps/web
+      - name: Start API against a fresh database
+        working-directory: apps/api
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
+          PGURL=postgresql://postgres@localhost:5433 ./scripts/bootstrap_db.sh
+          uv sync --frozen
+          uv run alembic upgrade head
+          nohup uv run uvicorn nexora.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+      - name: Start web
+        working-directory: apps/web
+        run: nohup npm start > /tmp/web.log 2>&1 &
+      - name: Install Playwright (global, Chromium only)
+        run: |
+          npm install -g playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Wait for servers
+        run: |
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/health && curl -sf http://127.0.0.1:3000/ >/dev/null && exit 0; sleep 2; done
+          cat /tmp/api.log /tmp/web.log; exit 1
+      - name: Preview crawl + accessibility
+        working-directory: apps/web
+        run: NODE_PATH=$(npm root -g) node tests/e2e.mjs
+      - name: Product end-to-end
+        working-directory: apps/web
+        run: NODE_PATH=$(npm root -g) node tests/product-e2e.mjs
+      - if: failure()
+        run: tail -n 200 /tmp/api.log /tmp/web.log || true

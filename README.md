@@ -1,65 +1,73 @@
 # NEXORA AI
 
-**AI marketing intelligence, campaign automation and revenue growth studio** — an evidence-first platform for agencies running multiple client workspaces.
+**AI marketing intelligence, campaign automation and revenue growth studio.** An evidence-first platform for agencies running multiple client workspaces.
 
-> **Status: Phase 0 + Phase 1 complete — awaiting design approval.**
-> Three interactive front-end design concepts are built and tested. No back end exists yet, and no live integrations or AI providers are connected. **All data shown is synthetic** (a fictional agency, *Halcyon Growth Partners*, and its fictional client *Lumen & Oak*).
+> **Status: Phase 2 complete (core SaaS foundation) on design direction B — Growth Intelligence.**
+> Working today: secure sign-up/sign-in, multi-tenant organisations with PostgreSQL row-level security, client workspaces, roles and permissions, invitations, projects, an append-only audit log, plan usage metering, workspace configuration, data export and deletion, and workspace-scoped API keys.
+> Not yet built: ad-platform connectors, real analytics, or any AI provider. Analytics screens show **synthetic data only in the demo workspace**. Real workspaces say plainly that no data is connected.
 
-## Run the previews locally
+## Quick start (local)
 
-Requires Node.js ≥ 22.
-
-```bash
-cd apps/web
-npm install
-npm run build && npm start      # production build on http://localhost:3000
-# or: npm run dev               # hot-reload dev server
-```
-
-Open **http://localhost:3000** for the concept hub, then:
-
-| Concept | Landing | App |
-|---|---|---|
-| **A — Nexora Atelier** (creative-first luxury studio) | `/atelier` | `/atelier/studio/today` |
-| **B — Nexora Growth Intelligence** (executive revenue terminal) | `/growth` | `/growth/app/overview` |
-| **C — Nexora Campaign Command** (AI-native ops center) | `/command` | `/command/ops/bridge` |
-
-Each concept has 12 screens (landing + 11 in-app) plus a responsive mobile layout. Use the **Preview state** switch (Data / Loading / Empty / Error) on any in-app screen to inspect state treatments. Try ⌘K / Ctrl+K in Concept B.
-
-### Tests
+Requirements: Node.js ≥ 22, Python ≥ 3.12 with [uv](https://docs.astral.sh/uv/), PostgreSQL 16.
 
 ```bash
-npm run typecheck
-npm run test:unit                # deterministic analytics (hand-computed expected values)
-npm start &                      # then, in another shell:
-npm run test:e2e                 # Playwright crawl + axe-core + interaction flows
+# 1. Database roles + schema (needs a superuser connection)
+cd apps/api
+PGURL=postgresql://postgres@localhost:5432 ./scripts/bootstrap_db.sh
+uv sync
+NEXORA_OWNER_DATABASE_URL=postgresql+psycopg://nexora_owner:nexora_owner@localhost:5432/nexora uv run alembic upgrade head
+
+# 2. API (runtime role is RLS-restricted)
+NEXORA_DATABASE_URL=postgresql+psycopg://nexora_app:nexora_app@localhost:5432/nexora \
+  uv run uvicorn nexora.main:app --port 8000
+
+# 3. Web (proxies /api → http://localhost:8000; override with NEXORA_API_URL)
+cd ../web && npm install && npm run build && npm start
 ```
 
-Latest results: [docs/testing/test-results.md](docs/testing/test-results.md) (9/9 unit, 80/80 browser checks).
+Or run everything with `PGURL=postgresql://postgres@localhost:5432 ./scripts/dev.sh`.
+
+Then open **http://localhost:3000/signup** to create an agency. You'll get a demo client workspace, and you can create real ones, invite teammates and issue API keys.
+
+| Area | URL |
+|---|---|
+| Product (direction B) | `/signup`, `/login`, `/app` |
+| Public API (API keys) | `/api/v1/workspace`, `/api/v1/projects` · OpenAPI docs at `http://localhost:8000/docs` |
+| Design concept previews | `/` (hub), `/atelier`, `/growth`, `/command` |
+
+## Tests
+
+```bash
+cd apps/api && uv run pytest                       # 36 tests against real PostgreSQL (NEXORA_TEST_SUPERUSER_URL)
+cd apps/web && npm run typecheck && npm run test:unit
+# with API + web running:
+node tests/product-e2e.mjs                          # 17-step product flow + axe
+node tests/e2e.mjs                                  # 80 preview crawl + axe checks
+```
+
+Latest results: [docs/testing/test-results.md](docs/testing/test-results.md). CI runs all of the above: [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ## Documentation
 
 | Document | Contents |
 |---|---|
-| [Competitive research](docs/research/competitive-analysis.md) | 14 vendors, capability matrix, market signals, segment, MVP priorities, sources |
-| [PRD & MVP scope](docs/product/prd-mvp.md) | Personas, principles, P0/P1/P2 scope, acceptance criteria |
-| [Architecture](docs/architecture/architecture.md) | Current preview structure, target modular monolith, security, cost estimates |
-| [Design concepts](docs/design/design-concepts.md) | How A/B/C differ, screen coverage, strengths and weaknesses |
-| [Screenshots](docs/screenshots/) | Desktop captures per concept + mobile contact sheet |
+| [Competitive research](docs/research/competitive-analysis.md) | 14 vendors, capability matrix, segment, MVP priorities, sources |
+| [PRD & MVP scope](docs/product/prd-mvp.md) | Personas, principles, P0/P1/P2 scope |
+| [Architecture](docs/architecture/architecture.md) | Current code map, tenancy model, target modular monolith, costs |
+| [Security overview](docs/security/security-overview.md) | Isolation, auth, CSRF, API keys, audit, known gaps |
+| [Design concepts](docs/design/design-concepts.md) | A/B/C comparison (B selected) |
+| [Screenshots](docs/screenshots/) | `phase2-*` product screens · concept previews |
 
 ## Repository layout
 
 ```
-apps/web/            Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · Motion · Recharts
-  app/               routes for the hub and the three concepts
-  components/        atelier/ · growth/ · command/ — independent shells and screens
-  lib/               metrics, attribution, stats, scenario, copilot router, synthetic data
-  tests/             analytics unit tests, browser e2e
-docs/                research, product, architecture, design, testing, screenshots
+apps/api/    FastAPI + PostgreSQL (RLS) — tenancy, auth, governance, public API
+apps/web/    Next.js product (design B) + the three concept previews
+docs/        research, product, architecture, security, design, testing, screenshots
+scripts/     dev.sh — local bootstrap and run
 ```
 
 ## Honesty notes
-- Metrics, attribution, experiment statistics and budget scenarios are computed by tested code. The preview "copilot" is a deterministic intent router, **not** an LLM.
-- Integrations marked "Demo fixture" are synthetic stand-ins; none are connected.
-- Image/video generation is not integrated. Campaign imagery is generated abstract SVG art, labelled as placeholder.
-- No paid API, subscription or cloud resource has been activated.
+- Every number in the product is computed by tested code. There is no LLM in the loop yet; the demo "copilot" is a deterministic router over synthetic data.
+- No paid API, subscription or cloud resource has been activated. Email delivery isn't configured, so invitation links are copied and shared by the inviter.
+- See the security overview for known gaps (MFA/SSO, shared rate limiting, KMS).
