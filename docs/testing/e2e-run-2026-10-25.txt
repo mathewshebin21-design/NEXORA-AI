@@ -1,0 +1,82 @@
+PASS  [desktop] /
+PASS  [desktop] /atelier
+PASS  [desktop] /growth
+PASS  [desktop] /command
+PASS  [desktop] /atelier/studio/today
+PASS  [desktop] /atelier/studio/research
+PASS  [desktop] /atelier/studio/campaigns
+PASS  [desktop] /atelier/studio/creative
+PASS  [desktop] /atelier/studio/audiences
+PASS  [desktop] /atelier/studio/journeys
+PASS  [desktop] /atelier/studio/performance
+PASS  [desktop] /atelier/studio/attribution
+PASS  [desktop] /atelier/studio/counsel
+PASS  [desktop] /atelier/studio/editions
+PASS  [desktop] /atelier/studio/house
+PASS  [desktop] /growth/app/overview
+PASS  [desktop] /growth/app/market
+PASS  [desktop] /growth/app/planner
+PASS  [desktop] /growth/app/creative
+PASS  [desktop] /growth/app/segments
+PASS  [desktop] /growth/app/journeys
+PASS  [desktop] /growth/app/performance
+PASS  [desktop] /growth/app/attribution
+PASS  [desktop] /growth/app/insights
+PASS  [desktop] /growth/app/reports
+PASS  [desktop] /growth/app/settings
+PASS  [desktop] /command/ops/bridge
+PASS  [desktop] /command/ops/recon
+PASS  [desktop] /command/ops/missions
+PASS  [desktop] /command/ops/forge
+PASS  [desktop] /command/ops/cohorts
+PASS  [desktop] /command/ops/journeys
+PASS  [desktop] /command/ops/telemetry
+PASS  [desktop] /command/ops/attribution
+PASS  [desktop] /command/ops/copilot
+PASS  [desktop] /command/ops/dispatch
+PASS  [desktop] /command/ops/systems
+PASS  [mobile] /
+PASS  [mobile] /atelier
+PASS  [mobile] /growth
+PASS  [mobile] /command
+PASS  [mobile] /atelier/studio/today
+PASS  [mobile] /atelier/studio/research
+PASS  [mobile] /atelier/studio/campaigns
+PASS  [mobile] /atelier/studio/creative
+PASS  [mobile] /atelier/studio/audiences
+PASS  [mobile] /atelier/studio/journeys
+PASS  [mobile] /atelier/studio/performance
+PASS  [mobile] /atelier/studio/attribution
+PASS  [mobile] /atelier/studio/counsel
+PASS  [mobile] /atelier/studio/editions
+PASS  [mobile] /atelier/studio/house
+PASS  [mobile] /growth/app/overview
+PASS  [mobile] /growth/app/market
+PASS  [mobile] /growth/app/planner
+PASS  [mobile] /growth/app/creative
+PASS  [mobile] /growth/app/segments
+PASS  [mobile] /growth/app/journeys
+PASS  [mobile] /growth/app/performance
+PASS  [mobile] /growth/app/attribution
+PASS  [mobile] /growth/app/insights
+PASS  [mobile] /growth/app/reports
+PASS  [mobile] /growth/app/settings
+PASS  [mobile] /command/ops/bridge
+PASS  [mobile] /command/ops/recon
+PASS  [mobile] /command/ops/missions
+PASS  [mobile] /command/ops/forge
+PASS  [mobile] /command/ops/cohorts
+PASS  [mobile] /command/ops/journeys
+PASS  [mobile] /command/ops/telemetry
+PASS  [mobile] /command/ops/attribution
+PASS  [mobile] /command/ops/copilot
+PASS  [mobile] /command/ops/dispatch
+PASS  [mobile] /command/ops/systems
+PASS  [interaction] atelier: nav + error state + retry
+PASS  [interaction] atelier: approval blocked by failing claim
+PASS  [interaction] growth: command palette navigates
+PASS  [interaction] growth: scenario slider changes projection
+PASS  [interaction] command: copilot answers with citations
+PASS  [interaction] command: launch locked until gates cleared
+
+80/80 checks passed

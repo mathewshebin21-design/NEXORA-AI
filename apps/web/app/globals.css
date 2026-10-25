@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   NEXORA AI — design tokens for the three preview concepts.
+   Each concept owns a namespaced palette so the three directions can
+   evolve independently without leaking into one another.
+------------------------------------------------------------------- */
+@theme {
+  /* Typography */
+  --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-manrope: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-grotesk: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  /* A — Atelier: ivory, graphite, champagne */
+  --color-ivory: #f8f4ec;
+  --color-ivory-deep: #efe8da;
+  --color-parchment: #e6dcc8;
+  --color-graphite: #23211e;
+  --color-graphite-soft: #4a4640;
+  --color-stone: #665f55;
+  --color-champagne: #c8a96a;
+  --color-champagne-deep: #725828;
+  --color-champagne-soft: #ece0c4;
+  --color-sage: #7d8b6f;
+  --color-rosewood: #8a4436;
+
+  /* B — Growth Intelligence: midnight navy, electric blue, teal */
+  --color-midnight: #070d1d;
+  --color-navy: #0c1530;
+  --color-navy-2: #111c3d;
+  --color-navy-3: #18264f;
+  --color-slate-line: #23315c;
+  --color-electric: #2e69ee;
+  --color-electric-soft: #8fb2ff;
+  --color-teal: #2ec5b6;
+  --color-amber-signal: #f2b544;
+  --color-coral-signal: #ff6b6b;
+  --color-mist: #a7b3d1;
+
+  /* C — Campaign Command: near-black, violet, cyan */
+  --color-void: #05050a;
+  --color-obsidian: #0b0b14;
+  --color-carbon: #12121e;
+  --color-carbon-2: #1a1a2a;
+  --color-rim: #2a2a40;
+  --color-violet: #8b5cf6;
+  --color-violet-soft: #c4b5fd;
+  --color-cyan: #22d3ee;
+  --color-cyan-soft: #a5f3fc;
+  --color-magenta: #f472b6;
+  --color-lime-pulse: #a3e635;
+  --color-haze: #9a9ab8;
+
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+  --animate-dash: dash 1.6s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-scan: scan 5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.7; }
+  80%, 100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes dash {
+  to { stroke-dashoffset: -24; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+
+/* Accessible focus ring that adapts per concept via currentColor accents */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring, #3d7bff);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--sk-a, #e9e2d3) 0px, var(--sk-b, #f6f1e7) 160px, var(--sk-a, #e9e2d3) 320px);
+  background-size: 800px 100%;
+  animation: var(--animate-shimmer);
+}
+
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.25 0 0 0 0 0.2 0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.grid-glow {
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.scrollbar-thin { scrollbar-width: thin; }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
