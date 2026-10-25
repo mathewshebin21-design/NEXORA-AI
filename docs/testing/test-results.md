@@ -1,6 +1,6 @@
 # Test Results
 
-All runs below were executed in the cloud development container on 2026-10-25 (PostgreSQL 16.15, Python 3.13, Node 22, Chromium via the pre-installed Playwright). CI (`.github/workflows/ci.yml`) runs the same suites. Its first run happens on push, and its status is reported separately.
+All runs below were executed in the cloud development container on 2026-10-25 (PostgreSQL 16.15, Python 3.13, Node 22, Chromium via the pre-installed Playwright). CI (`.github/workflows/ci.yml`) runs the same suites on every push; run #2 (commit 3aa24f8) passed on GitHub Actions.
 
 ## Phase 2 — core SaaS foundation
 
