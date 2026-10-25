@@ -75,7 +75,8 @@ jobs:
           PGURL=postgresql://postgres@localhost:5433 ./scripts/bootstrap_db.sh
           uv sync --frozen
           uv run alembic upgrade head
-          nohup uv run uvicorn nexora.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+          # Run from the venv (not `uv run`) so no uv process holds the cache lock when setup-uv prunes it
+          nohup .venv/bin/uvicorn nexora.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
       - name: Start web
         working-directory: apps/web
         run: nohup npm start > /tmp/web.log 2>&1 &
@@ -95,3 +96,6 @@ jobs:
         run: NODE_PATH=$(npm root -g) node tests/product-e2e.mjs
       - if: failure()
         run: tail -n 200 /tmp/api.log /tmp/web.log || true
+      - name: Stop servers
+        if: always()
+        run: pkill -f 'uvicorn nexora.main:app' || true; pkill -f next-server || true
