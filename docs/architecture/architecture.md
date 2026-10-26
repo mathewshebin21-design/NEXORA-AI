@@ -115,7 +115,7 @@ See [`docs/security/security-overview.md`](../security/security-overview.md) for
 | PostgreSQL | Neon / Supabase free tier → paid | $0 → ~$19–$25 |
 | Object storage | Cloudflare R2 (free tier 10 GB) | ~$0 |
 | Error monitoring | Sentry developer tier | $0 |
-| LLM usage | Pay-as-you-go via chosen provider | Usage-based. Needs your approval, and a cost estimate per feature before activation |
+| LLM usage | Anthropic Claude API, pay-as-you-go ([ADR-001](adr-001-ai-provider.md)) | ≈ $40–60 per active workspace/month (estimate); $0 in dev (mock). Needs your approval before activation |
 | SEO data (optional) | Semrush/Ahrefs APIs | Requires paid plans (see research). Not planned for MVP |
 
 *Prices are indicative and change often. Each will be confirmed before anything is provisioned.*

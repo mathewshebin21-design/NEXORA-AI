@@ -55,6 +55,7 @@ Latest results: [docs/testing/test-results.md](docs/testing/test-results.md). CI
 | [Competitive research](docs/research/competitive-analysis.md) | 14 vendors, capability matrix, segment, MVP priorities, sources |
 | [PRD & MVP scope](docs/product/prd-mvp.md) | Personas, principles, P0/P1/P2 scope |
 | [Architecture](docs/architecture/architecture.md) | Current code map, tenancy model, target modular monolith, costs |
+| [ADR-001: AI provider](docs/architecture/adr-001-ai-provider.md) | First AI provider (Anthropic Claude), models, cost estimate, guardrails |
 | [Security overview](docs/security/security-overview.md) | Isolation, auth, CSRF, API keys, audit, connectors, known gaps |
 | [Data connectors](docs/connectors/connectors.md) | Providers, setup, sync guarantees, lineage, limitations |
 | [Design concepts](docs/design/design-concepts.md) | A/B/C comparison (B selected) |
