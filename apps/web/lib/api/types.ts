@@ -44,3 +44,31 @@ export const WORKSPACE_ROLES: { id: WorkspaceRole; label: string }[] = [
   { id: "client_viewer", label: "Client viewer" },
 ];
 export const roleLabel = (r: string | null | undefined) => WORKSPACE_ROLES.find((x) => x.id === r)?.label ?? (r ? r[0].toUpperCase() + r.slice(1) : "—");
+
+// ---------------------------------------------------------------- data sources (Phase 3)
+export type ProviderKey = "google_ads" | "meta_ads" | "ga4" | "shopify";
+export type Connector = {
+  provider: ProviderKey;
+  name: string;
+  category: string;
+  produces: "ad_daily" | "orders" | "web_daily";
+  scopes: string[];
+  docs_url: string;
+  setup_note: string;
+  config_fields: { key: string; label: string; hint: string }[];
+  live_available: boolean;
+  live_unavailable_reason: string | null;
+  missing_settings: string[];
+};
+export type SyncRun = {
+  id: string; connection_id: string; status: "queued" | "running" | "succeeded" | "failed"; trigger: string;
+  window_start: string; window_end: string; attempt: number; max_attempts: number; records_fetched: number; records_upserted: number;
+  error: string | null; created_at: string; started_at: string | null; finished_at: string | null; duration_s: number | null;
+};
+export type ConnectionInfo = {
+  id: string; provider: ProviderKey; mode: "sample" | "live"; status: "active" | "error" | "revoked"; display_name: string;
+  external_account_id: string | null; scopes: string[]; config: Record<string, string>; last_sync_at: string | null; last_error: string | null;
+  created_at: string; data: { table: string; rows: number; from: string | null; to: string | null }; latest_run: SyncRun | null;
+};
+export type DataSummary = Record<"ad_daily" | "orders" | "web_daily", { rows: number; synthetic_rows: number; from: string | null; to: string | null }>;
+export type DataPreview = { table: string; columns: string[]; rows: Record<string, string | number | boolean | null>[] };

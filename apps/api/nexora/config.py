@@ -26,6 +26,28 @@ class Settings(BaseSettings):
     deletion_grace_days: int = 30
     public_base_url: str = "http://localhost:3000"
 
+    # ---- connectors (Phase 3) ----
+    # Fernet key (urlsafe base64, 32 bytes) for encrypting OAuth tokens at rest. Required for live connections.
+    encryption_key: str | None = None
+    # Run the sync worker inside the API process (convenient for development; use `python -m nexora.worker` in production).
+    embedded_worker: bool = False
+    worker_poll_seconds: float = 2.0
+    sync_default_window_days: int = 90
+    # OAuth apps. A provider is "live-capable" only when its client id + secret are configured.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    google_ads_developer_token: str | None = None
+    google_ads_login_customer_id: str | None = None
+    meta_app_id: str | None = None
+    meta_app_secret: str | None = None
+    shopify_client_id: str | None = None
+    shopify_client_secret: str | None = None
+    # API versions — confirm against each provider's current version table before go-live.
+    google_ads_api_version: str = "v26"
+    meta_api_version: str = "v25.0"
+    shopify_api_version: str = "2026-10"
+    ga4_api_version: str = "v1beta"
+
 
 @lru_cache
 def get_settings() -> Settings:

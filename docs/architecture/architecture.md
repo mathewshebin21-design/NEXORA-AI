@@ -2,7 +2,7 @@
 
 *Updated for Phase 2. The core SaaS foundation is implemented. Modules marked as planned in the target diagram arrive in later phases.*
 
-## What exists now (Phase 2 — core SaaS foundation)
+## What exists now (Phases 2–3 — SaaS foundation + data connectors)
 
 ```
 apps/api/                 FastAPI · SQLAlchemy 2 · PostgreSQL 16 · Alembic · Argon2id
@@ -14,7 +14,13 @@ apps/api/                 FastAPI · SQLAlchemy 2 · PostgreSQL 16 · Alembic ·
   nexora/routers/         auth · orgs (members, invitations) · workspaces (members, projects) ·
                           governance (API keys, audit, usage, export) · public (/v1, API keys)
   nexora/purge.py         hard-delete orgs after the deletion grace period
+  nexora/connectors/      adapter contract, Google Ads, GA4, Meta Ads, Shopify, sample-data generator,
+                          resilient HTTP client (retries/backoff/rate limit), token encryption, validated records
+  nexora/sync.py          enqueue (idempotent), claim (SKIP LOCKED), run, retry, idempotent upserts
+  nexora/worker.py        background worker (embedded thread in dev, `python -m nexora.worker` in prod)
+  nexora/routers/connections.py   catalog, connect (sample/OAuth), callback, sync, runs, data preview
   migrations/             0001: schema, RLS policies, grants, append-only audit trigger
+                          0002: connections, oauth_states, sync_runs, sync_queue, fact_ad_daily/orders/web_daily
   tests/                  auth, tenant isolation, RBAC, governance (PostgreSQL, real RLS)
 apps/web/                 Next.js 16 · React 19 · Tailwind 4 — design direction B
   app/login, /signup, /invite/[token]       authentication

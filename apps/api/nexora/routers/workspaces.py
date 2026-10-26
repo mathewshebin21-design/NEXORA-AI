@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit
 from ..deps import OrgContext, WorkspaceContext, org_context, require_org, require_ws, workspace_context
-from ..models import ApiKey, OrgMembership, Project, User, Workspace, WorkspaceMembership
+from ..models import ApiKey, Connection, OrgMembership, Project, User, Workspace, WorkspaceMembership
 from ..permissions import P, workspace_permissions
 from ..plans import limits
 from ..schemas import (
@@ -122,6 +122,12 @@ def delete_workspace(body: ConfirmIn, ctx: WorkspaceContext = Depends(require_ws
         raise HTTPException(422, "Type the workspace name to confirm deletion.")
     ws.deleted_at = now()
     ctx.db.execute(update(ApiKey).where(ApiKey.workspace_id == ws.id, ApiKey.revoked_at.is_(None)).values(revoked_at=now()))
+    # Disconnect data sources and destroy their stored provider tokens.
+    ctx.db.execute(
+        update(Connection)
+        .where(Connection.workspace_id == ws.id, Connection.revoked_at.is_(None))
+        .values(revoked_at=now(), status="revoked", credentials=None)
+    )
     audit.record(
         ctx.db,
         org_id=ctx.org.id,
@@ -130,7 +136,7 @@ def delete_workspace(body: ConfirmIn, ctx: WorkspaceContext = Depends(require_ws
         actor_user_id=ctx.user.id,
         target_type="workspace",
         target_id=ws.id,
-        details={"name": ws.name, "mode": "soft", "api_keys_revoked": True},
+        details={"name": ws.name, "mode": "soft", "api_keys_revoked": True, "connections_revoked": True},
         ip=ctx.ip,
     )
     return Response(status_code=204)

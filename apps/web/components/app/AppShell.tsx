@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  BarChart3, Building2, Check, ChevronDown, ChevronsLeft, FileBarChart, FolderKanban, GitFork, Globe2, KeyRound, LayoutGrid, Lightbulb,
+  BarChart3, Building2, Cable, Check, ChevronDown, ChevronsLeft, FileBarChart, FolderKanban, GitFork, Globe2, KeyRound, LayoutGrid, Lightbulb,
   LogOut, MoreHorizontal, Palette, PieChart, Plus, ScrollText, Settings, ShieldCheck, Target, Users, Gauge, X,
 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -21,6 +21,7 @@ export const WS_NAV: { label: string; items: NavItem[] }[] = [
     { slug: "journeys", label: "Journeys & Funnels", icon: GitFork, scope: "ws" },
   ] },
   { label: "Plan", items: [
+    { slug: "data", label: "Data sources", icon: Cable, scope: "ws", perm: "data.read" },
     { slug: "market", label: "Market Intel", icon: Globe2, scope: "ws" },
     { slug: "planner", label: "Campaign Planner", icon: Target, scope: "ws" },
     { slug: "segments", label: "Segments", icon: Users, scope: "ws" },

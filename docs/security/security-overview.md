@@ -1,4 +1,4 @@
-# Security Overview (Phase 2)
+# Security Overview (Phases 2–3)
 
 What is implemented and tested today, and what is deliberately not done yet.
 
@@ -42,9 +42,17 @@ What is implemented and tested today, and what is deliberately not done yet.
 - Workspace deletion: confirmation by name, soft delete, keys revoked immediately.
 - Organisation deletion: confirmation by slug, 30-day grace period, cancellable. `python -m nexora.purge` hard-deletes afterwards (tested).
 
+## Data connectors (Phase 3)
+- Provider OAuth tokens are encrypted at rest with Fernet (`NEXORA_ENCRYPTION_KEY`). They are never returned by the API, and they are destroyed when a connection is disconnected or its workspace is deleted. Live mode is disabled unless the key is set.
+- The OAuth `state` is stored only as a hash. It is single-use, expires after 10 minutes, and is bound to the initiating user. Google flows also use PKCE (S256).
+- Shopify callbacks are HMAC-verified, and shop hosts must match `*.myshopify.com` (SSRF guard). Tests cover IP literals, suffix attacks and path tricks.
+- Connector tables (`connections`, `oauth_states`, `sync_runs`, `fact_*`) use the same forced org-level RLS. The shared `sync_queue` holds only run/org ids and timing, which is asserted in tests.
+- Imported orders store only a SHA-256 of the customer id. No PII fields are requested.
+- Full details: [`docs/connectors/connectors.md`](../connectors/connectors.md).
+
 ## Known gaps (planned)
 - No MFA, SSO (SAML/OIDC) or email verification yet. Email delivery isn't configured, so invitation links are shared manually.
 - The rate limiter is in-process. A multi-instance deployment needs a shared store.
 - The `users` and `sessions` tables are global (no RLS). They are only queried by id, token hash or email.
-- No automated secret rotation and no KMS envelope encryption yet. These matter once OAuth tokens for ad platforms are stored (Phase 3).
+- Tokens use a single application key (Fernet). KMS-managed envelope encryption and key rotation are not implemented yet.
 - No penetration test has been performed.

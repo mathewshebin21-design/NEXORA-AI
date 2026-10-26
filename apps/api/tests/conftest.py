@@ -23,6 +23,7 @@ os.environ["NEXORA_OWNER_DATABASE_URL"] = OWNER_URL
 
 ROOT = Path(__file__).resolve().parents[1]
 TABLES = (
+    "fact_ad_daily, fact_orders, fact_web_daily, sync_queue, sync_runs, oauth_states, connections, "
     "usage_events, audit_logs, api_keys, projects, invitations, workspace_memberships, workspaces, org_memberships, organizations, sessions, users"
 )
 

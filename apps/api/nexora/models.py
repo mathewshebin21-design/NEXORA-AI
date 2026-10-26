@@ -1,14 +1,18 @@
 """ORM models. Every tenant-owned table carries `org_id` and is protected by RLS (see migrations)."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -172,3 +176,126 @@ class UsageEvent(Base):
     metric: Mapped[str] = mapped_column(String(32), nullable=False)
     quantity: Mapped[int] = mapped_column(BigInteger, nullable=False, default=1)
     occurred_at: Mapped[datetime] = _ts()
+
+
+# ---------------------------------------------------------------- connectors (Phase 3)
+class Connection(Base):
+    __tablename__ = "connections"
+    id: Mapped[uuid.UUID] = _id()
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    mode: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
+    display_name: Mapped[str] = mapped_column(String(160), nullable=False)
+    external_account_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    scopes: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    credentials: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    config: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    last_sync_at: Mapped[datetime | None] = _ts(nullable=True, default=False)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at: Mapped[datetime] = _ts()
+    revoked_at: Mapped[datetime | None] = _ts(nullable=True, default=False)
+
+
+class OAuthState(Base):
+    __tablename__ = "oauth_states"
+    state_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    code_verifier: Mapped[str] = mapped_column(Text, nullable=False)
+    config: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    created_at: Mapped[datetime] = _ts()
+    expires_at: Mapped[datetime] = _ts(default=False)
+    used_at: Mapped[datetime | None] = _ts(nullable=True, default=False)
+
+
+class SyncRun(Base):
+    __tablename__ = "sync_runs"
+    id: Mapped[uuid.UUID] = _id()
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="queued")
+    trigger: Mapped[str] = mapped_column(String(16), nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    window_start: Mapped[date] = mapped_column(Date, nullable=False)
+    window_end: Mapped[date] = mapped_column(Date, nullable=False)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    records_fetched: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    records_upserted: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    created_at: Mapped[datetime] = _ts()
+    started_at: Mapped[datetime | None] = _ts(nullable=True, default=False)
+    finished_at: Mapped[datetime | None] = _ts(nullable=True, default=False)
+
+
+class SyncQueue(Base):
+    __tablename__ = "sync_queue"
+    run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    available_at: Mapped[datetime] = _ts()
+    locked_at: Mapped[datetime | None] = _ts(nullable=True, default=False)
+    locked_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class FactAdDaily(Base):
+    __tablename__ = "fact_ad_daily"
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    sync_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    ingested_at: Mapped[datetime] = _ts()
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    account_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    campaign_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    campaign_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    impressions: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    clicks: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    spend: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
+    platform_conversions: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
+    platform_conversion_value: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+
+
+class FactOrder(Base):
+    __tablename__ = "fact_orders"
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    sync_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    ingested_at: Mapped[datetime] = _ts()
+    order_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    ordered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    total_revenue: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    customer_ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    is_first_order: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    utm_source: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    utm_medium: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    utm_campaign: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    financial_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+
+class FactWebDaily(Base):
+    __tablename__ = "fact_web_daily"
+    org_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    connection_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    sync_run_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    is_synthetic: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    ingested_at: Mapped[datetime] = _ts()
+    date: Mapped[date] = mapped_column(Date, primary_key=True)
+    channel_group: Mapped[str] = mapped_column(String(64), primary_key=True)
+    sessions: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    engaged_sessions: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    key_events: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)
+    purchase_revenue: Mapped[Decimal] = mapped_column(Numeric(14, 4), nullable=False)

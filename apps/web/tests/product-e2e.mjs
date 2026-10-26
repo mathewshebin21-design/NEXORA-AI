@@ -72,6 +72,7 @@ await check("create a client workspace and land on its settings", async () => {
 await check("non-demo analytics screens show an honest empty state", async () => {
   await op.goto(`${BASE}/app/${orgId}/w/${alphaWs}/overview`, { waitUntil: "networkidle" });
   await op.getByText("No data connected yet").waitFor();
+  await op.getByRole("link", { name: "Connect data sources" }).waitFor();
   assert(!(await op.getByText("Demo workspace · all figures").count()), "demo banner should not show on a real workspace");
   await axe(op, "empty overview");
 });
@@ -92,6 +93,26 @@ await check("projects: create and list", async () => {
   await op.getByRole("button", { name: "Create project" }).click();
   await op.getByText("Q4 launch").first().waitFor();
   await axe(op, "projects");
+});
+
+await check("data sources: sample connectors sync with lineage", async () => {
+  await op.goto(`${BASE}/app/${orgId}/w/${alphaWs}/data`, { waitUntil: "networkidle" });
+  await op.getByRole("heading", { name: "Data sources" }).waitFor();
+  const gads = op.getByRole("region", { name: "Google Ads" });
+  assert(await gads.getByRole("button", { name: "Connect account" }).isDisabled(), "live connect disabled without OAuth config");
+  await gads.getByText(/Live connection unavailable/).waitFor();
+  await gads.getByRole("button", { name: "Use sample data" }).click();
+  const shop = op.getByRole("region", { name: "Shopify" });
+  await shop.getByRole("button", { name: "Use sample data" }).click();
+  await gads.getByText("succeeded").waitFor({ timeout: 30000 });
+  await shop.getByText("succeeded").waitFor({ timeout: 30000 });
+  await op.getByText("All data in this workspace is synthetic sample data").waitFor();
+  await op.getByText("synthetic").first().waitFor();
+  await gads.getByRole("button", { name: /Sync now/ }).click();
+  await op.waitForFunction(() => document.querySelectorAll("table")[0]?.innerText.match(/succeeded/g)?.length >= 2, null, { timeout: 30000 });
+  await axe(op, "data sources");
+  await op.goto(`${BASE}/app/${orgId}/w/${alphaWs}/overview`, { waitUntil: "networkidle" });
+  await op.getByText("Data connected — analysis coming next").waitFor();
 });
 
 await check("API key is shown once and works against /v1", async () => {
@@ -137,6 +158,7 @@ await check("invitee accepts with a new account and sees only the assigned works
   const visible = await mp.evaluate(async (o) => (await (await fetch(`/api/orgs/${o}/workspaces`)).json()).map((w) => w.name), orgId);
   assert(visible.length === 1 && visible[0] === "Client Alpha", `visible workspaces: ${visible}`);
   assert((await mp.getByRole("link", { name: "Projects", exact: true }).count()) === 0, "projects nav hidden for client viewer");
+  assert((await mp.getByRole("link", { name: "Data sources" }).count()) === 0, "data sources nav hidden for client viewer");
 });
 
 await check("client viewer is blocked from the demo workspace and from writes", async () => {
@@ -150,7 +172,7 @@ await check("audit log records the flow", async () => {
   await op.goto(`${BASE}/app/${orgId}/org/audit`, { waitUntil: "networkidle" });
   await op.getByText("invitation.accepted", { exact: true }).first().waitFor({ timeout: 8000 });
   const shown = await op.locator("table").first().innerText();
-  const missing = ["invitation.accepted", "invitation.created", "api_key.created", "project.created", "workspace.updated", "workspace.created", "auth.signup"].filter((a) => !shown.includes(a));
+  const missing = ["invitation.accepted", "invitation.created", "api_key.created", "sync.succeeded", "connection.created", "project.created", "workspace.updated", "workspace.created", "auth.signup"].filter((a) => !shown.includes(a));
   assert(missing.length === 0, `missing audit actions: ${missing.join(", ")}`);
   await axe(op, "audit");
 });

@@ -2,6 +2,36 @@
 
 All runs below were executed in the cloud development container on 2026-10-25 (PostgreSQL 16.15, Python 3.13, Node 22, Chromium via the pre-installed Playwright). CI (`.github/workflows/ci.yml`) runs the same suites on every push; run #2 (commit 3aa24f8) passed on GitHub Actions.
 
+## Phase 3 — data connectors (2026-10-26)
+
+| Suite | Result |
+|---|---|
+| API lint + format | ✅ clean |
+| API tests (real PostgreSQL + RLS) | ✅ **58 / 58 passed** (36 Phase 2 + 22 connector tests) |
+| Product end-to-end (browser → Next.js → API + embedded worker → PostgreSQL) | ✅ **18 / 18 checks passed** |
+| Preview crawl + axe (regression) | ✅ 80 / 80 |
+| Analytics unit tests (regression) | ✅ 9 / 9 |
+
+### Connector test coverage (22)
+- **Sample mode:** all four providers sync; row counts per window; every row flagged synthetic with lineage columns; customer refs are SHA-256 only.
+- **Idempotency:** the same `Idempotency-Key` returns the same run; a second active run is refused (409); re-syncing a window leaves totals and row counts unchanged.
+- **Lifecycle:** one connection per provider; disconnect with purge deletes rows and is audited; deleting a workspace revokes connections and destroys tokens.
+- **OAuth (mocked provider):**
+  - authorize URL with PKCE S256, offline access and state;
+  - callback creates an encrypted live connection (plaintext token absent from the stored blob);
+  - states are single-use and bound to the initiating user.
+- **Live fetch (mocked HTTP):**
+  - Google Ads request path, headers and GAQL verified, and rows stored with `is_synthetic = false`;
+  - micros converted to currency;
+  - 503 retried with backoff, then failed after 3 attempts with an audit entry;
+  - 401 failed immediately;
+  - `Retry-After` honoured.
+- **Parsers (documented response shapes):** Google Ads, GA4, Meta (one purchase action type, no double counting), Shopify (hashed customer, UTM); invalid records rejected.
+- **Guards:** Shopify SSRF host checks; HMAC pass and fail.
+- **Isolation and permissions:** other orgs get 404; RLS raw-SQL counts are 0; `sync_queue` contains only routing columns; client viewers are denied; strategists can sync but not connect or disconnect.
+
+**Not yet run:** live acceptance tests against real Google/Meta/Shopify accounts. No credentials exist yet; see `docs/connectors/connectors.md`.
+
 ## Phase 2 — core SaaS foundation
 
 | Suite | Command | Result |

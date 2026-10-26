@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from .. import audit
 from ..deps import OrgContext, WorkspaceContext, require_org, require_ws
-from ..models import ApiKey, AuditLog, Invitation, OrgMembership, Project, UsageEvent, User, Workspace, WorkspaceMembership
+from ..models import ApiKey, AuditLog, Connection, Invitation, OrgMembership, Project, UsageEvent, User, Workspace, WorkspaceMembership
 from ..permissions import P
 from ..plans import limits
 from ..schemas import ApiKeyCreate, ApiKeyCreated, ApiKeyOut, AuditOut, AuditPage, ProjectOut, UsageMetric, UsageOut, WorkspaceOut
@@ -156,6 +156,12 @@ def usage(ctx: OrgContext = Depends(require_org(P.USAGE_READ))):
         metrics=[
             UsageMetric(metric="seats", used=seats_in_use(db, ctx.org.id), limit=lim["seats"]),
             UsageMetric(metric="workspaces", used=ws_count, limit=lim["workspaces"]),
+            UsageMetric(
+                metric="connections",
+                used=db.scalar(select(func.count()).select_from(Connection).where(Connection.org_id == ctx.org.id, Connection.revoked_at.is_(None)))
+                or 0,
+                limit=lim.get("connections"),
+            ),
             UsageMetric(metric="api_requests_month", used=usage_this_month(db, ctx.org.id, "api_request"), limit=lim["api_requests_month"]),
             UsageMetric(metric="ai_tokens_month", used=usage_this_month(db, ctx.org.id, "ai_tokens"), limit=lim["ai_tokens_month"]),
         ],

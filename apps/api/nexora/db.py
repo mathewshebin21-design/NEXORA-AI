@@ -18,7 +18,7 @@ _settings = get_settings()
 engine = create_engine(_settings.database_url, pool_pre_ping=True, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
-CONTEXT_KEYS = ("user_id", "org_id", "invite_token_hash", "api_key_prefix")
+CONTEXT_KEYS = ("user_id", "org_id", "invite_token_hash", "api_key_prefix", "oauth_state_hash")
 
 
 def _apply_context(session: Session, connection) -> None:
@@ -28,7 +28,7 @@ def _apply_context(session: Session, connection) -> None:
         text(
             "SELECT set_config('app.user_id', :user_id, true), set_config('app.org_id', :org_id, true), "
             "set_config('app.invite_token_hash', :invite_token_hash, true), "
-            "set_config('app.api_key_prefix', :api_key_prefix, true)"
+            "set_config('app.api_key_prefix', :api_key_prefix, true), set_config('app.oauth_state_hash', :oauth_state_hash, true)"
         ),
         params,
     )

@@ -14,7 +14,9 @@ import Attribution from "@/components/growth/screens/Attribution";
 import Insights from "@/components/growth/screens/Insights";
 import Reports from "@/components/growth/screens/Reports";
 import { CHANNELS } from "@/lib/demo-data";
+import type { DataSummary } from "@/lib/api/types";
 import { useApp } from "../AppContext";
+import { useResource } from "../useResource";
 import { PageTitle, WS_NAV } from "../AppShell";
 
 const SCREENS: Record<string, React.ComponentType> = {
@@ -43,31 +45,46 @@ function DemoFilters() {
   );
 }
 
+function RealWorkspaceState({ slug, label }: { slug: string; label: string }) {
+  const { org, workspace } = useApp();
+  const canData = !!workspace?.permissions.includes("data.read");
+  const { data } = useResource<DataSummary>(canData ? `/orgs/${org.id}/workspaces/${workspace!.id}/data-summary` : null);
+  const rows = data ? data.ad_daily.rows + data.orders.rows + data.web_daily.rows : 0;
+  const synthetic = data ? data.ad_daily.synthetic_rows + data.orders.synthetic_rows + data.web_daily.synthetic_rows : 0;
+  const dataHref = `/app/${org.id}/w/${workspace!.id}/data`;
+  return (
+    <div>
+      <PageTitle title={label} subtitle={workspace!.name} />
+      <Panel title={rows ? "Data connected — analysis coming next" : "No data connected yet"} subtitle={`This view arrives in ${PHASE[slug]}`}>
+        <div className="flex flex-col items-start gap-3 py-4 text-[13px] text-mist md:flex-row md:items-center md:gap-6">
+          <Database className="h-8 w-8 shrink-0 text-electric-soft" aria-hidden />
+          {rows ? (
+            <p className="max-w-2xl">
+              {rows.toLocaleString()} rows have been imported{synthetic === rows ? " (all synthetic sample data)" : synthetic ? ` (${synthetic.toLocaleString()} synthetic)` : ""}.
+              The deterministic metric and attribution engine that turns them into this view is the next build phase — until then you can inspect the raw rows, with lineage, in Data sources.
+            </p>
+          ) : (
+            <p className="max-w-2xl">
+              This workspace has no connected sources, so there is nothing to measure yet — and Nexora never fills the gap with estimates.
+              Connect Google Ads, Meta Ads, GA4 or Shopify (or load clearly labelled sample data) in Data sources.
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {canData && <Link href={dataHref} className="inline-flex items-center gap-1.5 rounded-lg bg-electric px-3 py-1.5 text-[12px] font-medium text-white hover:bg-electric/85"><Cable className="h-3.5 w-3.5" aria-hidden /> {rows ? "View imported data" : "Connect data sources"}</Link>}
+          {workspace!.permissions.includes("projects.read") && <Link href={`/app/${org.id}/w/${workspace!.id}/projects`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-line px-3 py-1.5 text-[12px] text-white hover:bg-navy-3">Plan work in Projects</Link>}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
 export function AnalyticsScreen({ slug }: { slug: string }) {
   const { org, workspace } = useApp();
   const label = WS_NAV.flatMap((g) => g.items).find((i) => i.slug === slug)?.label ?? slug;
   if (!workspace) return null;
 
-  if (!workspace.is_demo) {
-    return (
-      <div>
-        <PageTitle title={label} subtitle={workspace.name} />
-        <Panel title="No data connected yet" subtitle={`Arrives in ${PHASE[slug]}`}>
-          <div className="flex flex-col items-start gap-3 py-4 text-[13px] text-mist md:flex-row md:items-center md:gap-6">
-            <Database className="h-8 w-8 shrink-0 text-electric-soft" aria-hidden />
-            <p className="max-w-2xl">
-              This workspace has no connected sources, so there is nothing to measure yet — and Nexora never fills the gap with estimates.
-              Authorised connectors (Google Ads, Meta Ads, GA4, Shopify) are the next phase. Until then, the demo workspace shows how this screen behaves with synthetic data.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {workspace.permissions.includes("projects.read") && <Link href={`/app/${org.id}/w/${workspace.id}/projects`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-line px-3 py-1.5 text-[12px] text-white hover:bg-navy-3">Plan work in Projects</Link>}
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-line px-3 py-1.5 text-[12px] text-mist"><Cable className="h-3.5 w-3.5" aria-hidden /> Connectors — not yet available</span>
-          </div>
-        </Panel>
-      </div>
-    );
-  }
+  if (!workspace.is_demo) return <RealWorkspaceState slug={slug} label={label} />;
 
   const Screen = SCREENS[slug];
   return (

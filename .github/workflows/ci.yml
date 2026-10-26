@@ -76,7 +76,7 @@ jobs:
           uv sync --frozen
           uv run alembic upgrade head
           # Run from the venv (not `uv run`) so no uv process holds the cache lock when setup-uv prunes it
-          nohup .venv/bin/uvicorn nexora.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
+          NEXORA_EMBEDDED_WORKER=true nohup .venv/bin/uvicorn nexora.main:app --host 127.0.0.1 --port 8000 > /tmp/api.log 2>&1 &
       - name: Start web
         working-directory: apps/web
         run: nohup npm start > /tmp/web.log 2>&1 &

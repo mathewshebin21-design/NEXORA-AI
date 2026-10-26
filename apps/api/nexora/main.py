@@ -2,6 +2,7 @@ import json
 import logging
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -9,7 +10,7 @@ from sqlalchemy import text
 
 from .config import get_settings
 from .db import SessionLocal
-from .routers import auth, governance, orgs, public, workspaces
+from .routers import auth, connections, governance, orgs, public, workspaces
 
 settings = get_settings()
 
@@ -22,7 +23,20 @@ if not log.handlers:
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
-app = FastAPI(title="NEXORA AI API", version="0.2.0", docs_url="/docs", redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if settings.embedded_worker:
+        from .worker import start_embedded, stop_embedded
+
+        start_embedded()
+        yield
+        stop_embedded()
+    else:
+        yield
+
+
+app = FastAPI(title="NEXORA AI API", version="0.3.0", docs_url="/docs", redoc_url=None, lifespan=lifespan)
 
 
 @app.middleware("http")
@@ -68,3 +82,4 @@ app.include_router(orgs.router)
 app.include_router(workspaces.router)
 app.include_router(governance.router)
 app.include_router(public.router)
+app.include_router(connections.router)
